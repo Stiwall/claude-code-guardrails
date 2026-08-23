@@ -1,5 +1,7 @@
 # claude-code-guardrails
 
+[![tests](https://github.com/Stiwall/claude-code-guardrails/actions/workflows/tests.yml/badge.svg)](https://github.com/Stiwall/claude-code-guardrails/actions/workflows/tests.yml)
+
 Three hooks that stop an AI coding agent from leaking your secrets, pushing to
 a protected branch, or telling you it is done when it is not.
 

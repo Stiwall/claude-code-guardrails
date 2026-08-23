@@ -1,0 +1,36 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # No dependencies, so the only thing worth proving is that the regexes
+        # and the stdlib calls behave the same across supported versions.
+        python-version: ["3.9", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run the suite
+        run: python -m unittest discover -s tests -v
+      - name: Hooks must survive being handed garbage
+        # A hook that crashes on malformed input is a hook that blocks your
+        # work for reasons you cannot debug. Empty stdin, invalid JSON and a
+        # payload with no command must all exit cleanly.
+        run: |
+          set -e
+          for payload in '' 'not json' '{}' '{"tool_input":{}}'; do
+            printf '%s' "$payload" | python hooks/guard.py
+            printf '%s' "$payload" | python hooks/evidence_audit.py > /dev/null
+            printf '%s' "$payload" | python hooks/redact.py > /dev/null
+          done
+          echo "hooks handled malformed input without crashing"
