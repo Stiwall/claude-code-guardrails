@@ -1,0 +1,33 @@
+{
+  "_comment": "Copy to hooks/guardrails.json and edit. Anything omitted falls back to the built-in defaults in guard.py.",
+
+  "protected_branches": ["main", "master"],
+  "override_token": "APPROVED_PUSH=1",
+  "override_log": "~/.claude/protected-push.log",
+  "unprotected_repos": [],
+
+  "protected_paths": [
+    "\\.ssh",
+    "\\bvenv\\b",
+    "\\.git\\b"
+  ],
+
+  "secret_file_pattern": "[\\w./-]*(token|secret|credential|apikey|api_key|passwd|password)[\\w./-]*\\.(json|ya?ml|conf|cfg|ini|txt|sh|env)",
+
+  "redactor": "redact",
+
+  "extra_rules": [
+    {
+      "pattern": "\\bterraform\\s+destroy\\b",
+      "message": "terraform destroy from an agent: run it yourself."
+    },
+    {
+      "pattern": "\\bapt(-get)?\\b[^|;&]*\\b(full-upgrade|dist-upgrade)\\b",
+      "message": "full-upgrade breaks dpkg in a PRoot/chroot environment (hardlinks). Upgrade single packages instead."
+    },
+    {
+      "pattern": "api\\.telegram\\.org[^\\s\"']*/getUpdates",
+      "message": "a manual getUpdates steals the poll from a bot that already has one, and takes that service down with a 409. Read its logs or its database instead."
+    }
+  ]
+}

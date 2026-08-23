@@ -1,0 +1,28 @@
+{
+  "_comment": "Merge the \"hooks\" block into ~/.claude/settings.json and replace /path/to with wherever you cloned this repo.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "python3 /path/to/claude-code-guardrails/hooks/guard.py" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "python3 /path/to/claude-code-guardrails/hooks/redact.py" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 /path/to/claude-code-guardrails/hooks/evidence_audit.py" }
+        ]
+      }
+    ]
+  }
+}
