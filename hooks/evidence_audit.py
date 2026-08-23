@@ -78,9 +78,14 @@ SHELL_VERIFY = re.compile(
 SHELL_TEST = re.compile(
     r"\b(pytest|unittest|jest|playwright|npm\s+(?:test|run\s+(?:test|lint|build|check))|"
     r"cargo\s+test|go\s+test|node\s+--check|py_compile|bash\s+-n)\b", re.I)
+# Publishing is not always `git push`. A whole repository was created and made
+# public with `gh repo create --push`, and the audit asked for \"a deploy action\"
+# that had in fact happened. Package publishing counts the same way.
 SHELL_DEPLOY = re.compile(
     r"\b(railway\s+(?:up|redeploy)|vercel\s+deploy|fly\s+deploy|docker\s+compose\s+up|"
-    r"kubectl\s+(?:apply|rollout)|systemctl\s+restart|git\s+push\b)", re.I)
+    r"kubectl\s+(?:apply|rollout)|systemctl\s+restart|git\s+push\b|"
+    r"gh\s+repo\s+create[^|;&]*--push|gh\s+release\s+create|npm\s+publish|"
+    r"twine\s+upload|cargo\s+publish)", re.I)
 SHELL_PUSH = re.compile(r"\bgit\s+push\b", re.I)
 SHELL_SEND = re.compile(r"\b(sendMessage|sendDocument|scp\s|rsync\s|mail\s)", re.I)
 

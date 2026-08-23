@@ -158,6 +158,20 @@ class EvidenceAudit(unittest.TestCase):
             [self.call("Bash", "git push origin main")])
         self.assertTrue(any("destination" in p for p in problems))
 
+    def test_publishing_counts_even_without_git_push(self):
+        # A repository published with `gh repo create --push` is a deploy. The
+        # first version of this pattern only knew about `git push` and asked for
+        # a deploy that had already happened.
+        problems = self.audit(
+            "Published.\nChanges: repo\nEvidence: gh repo view\nLocation: github\nPending: none\n",
+            [self.call("Bash", "gh repo create thing --public --source=. --push"),
+             self.call("Bash", "gh repo view thing --json url")])
+        self.assertFalse(any("deploy or publish" in p for p in problems))
+
+    def test_creating_a_repo_without_pushing_is_not_publishing(self):
+        problems = self.audit("Published it.", [self.call("Bash", "gh repo create thing --public")])
+        self.assertTrue(any("deploy or publish" in p for p in problems))
+
     def test_receipt_is_required_when_something_changed(self):
         problems = self.audit(
             "Done, I fixed it.",
