@@ -43,9 +43,28 @@ DEPLOY_CLAIM = re.compile(r"\b(deployed|published|shipped|in production|live)\b"
 PUSH_CLAIM = re.compile(r"\b(pushed|merged)\b", re.I)
 SEND_CLAIM = re.compile(r"\b(sent|delivered|emailed|uploaded)\b", re.I)
 # Hedged language is not a claim. "not verified" must never trip the verify rule.
+# Every negation form that is missing turns a sentence that DENIES into one that
+# asserts -- the worst direction for this to fail in. neither/nor/none were
+# missing and cost a false block.
 NEGATION = re.compile(
-    r"\b(no|not|never|without|pending|partial|partially|unverified|couldn'?t|"
-    r"could not|unable|failed|incomplete|still|yet)\b", re.I)
+    r"\b(no|not|never|neither|nor|none|without|pending|partial|partially|"
+    r"unverified|couldn'?t|could not|cannot|can'?t|unable|failed|incomplete|"
+    r"still|yet)\b", re.I)
+
+# Quoting a claim is not making one. This hook once blocked a turn because the
+# message contained the example "I pushed to origin" while explaining a test --
+# the same mistake guard.py made until it learned to strip heredoc bodies.
+# Only SHORT spans are stripped: a whole paragraph in quotes is still a claim
+# wearing a costume.
+QUOTED_SPAN = re.compile(
+    "`[^`\n]{1,80}`"
+    "|\u00ab[^\u00bb\n]{1,80}\u00bb"
+    "|[\u201c\"][^\u201d\"\n]{1,80}[\u201d\"]"
+    "|[\u2018'][^\u2019'\n]{1,80}[\u2019']")
+
+
+def strip_quotes(text):
+    return QUOTED_SPAN.sub(" ", text)
 
 # --- the closing receipt -----------------------------------------------------
 RECEIPT_FIELDS = {
@@ -106,7 +125,7 @@ def _positive(pattern, message):
     by one word, and a whole-message check would treat them the same.
     """
     return any(pattern.search(part) and not NEGATION.search(part)
-               for part in re.split(r"(?<=[.!?])\s+|\n+", message))
+               for part in re.split(r"(?<=[.!?])\s+|\n+", strip_quotes(message)))
 
 
 def _asks_for_action(prompt):

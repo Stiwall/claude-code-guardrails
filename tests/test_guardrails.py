@@ -172,6 +172,25 @@ class EvidenceAudit(unittest.TestCase):
         problems = self.audit("Published it.", [self.call("Bash", "gh repo create thing --public")])
         self.assertTrue(any("deploy or publish" in p for p in problems))
 
+    def test_quoting_a_claim_is_not_making_one(self):
+        # This hook blocked a real turn over the quoted example below, while the
+        # message was explaining a test. guard.py had the same bug with heredocs.
+        problems = self.audit(
+            'The negative control, "I pushed to origin", still fires.\n'
+            "Changes: hook\nEvidence: control run\nLocation: local\nPending: none\n",
+            [self.call("Edit"), self.call("Bash", "grep -n NEGATION hook.py")])
+        self.assertFalse(any("pushed or sent" in p for p in problems))
+
+    def test_an_unquoted_claim_still_fires(self):
+        # The other direction matters more: fixing a false positive must not
+        # open a false negative.
+        problems = self.audit("I pushed it to origin.", [self.call("Edit")])
+        self.assertTrue(any("pushed or sent" in p for p in problems))
+
+    def test_neither_nor_reads_as_denial(self):
+        problems = self.audit("Neither pushed nor sent anything.", [self.call("Read")])
+        self.assertFalse(any("pushed or sent" in p for p in problems))
+
     def test_receipt_is_required_when_something_changed(self):
         problems = self.audit(
             "Done, I fixed it.",
